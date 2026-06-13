@@ -56,7 +56,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [formatCurrency(value), 'Pendapatan']}
+              formatter={(value: any) => [formatCurrency(value), 'Pendapatan']}
             />
             <Area
               type="monotone"
