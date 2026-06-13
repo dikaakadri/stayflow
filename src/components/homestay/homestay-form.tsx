@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Homestay } from '@/types';
 import { Check } from 'lucide-react';
+import { MOCK_HOMESTAYS } from '@/lib/mock-data';
 
 interface HomestayFormProps {
   initialData?: Homestay;
