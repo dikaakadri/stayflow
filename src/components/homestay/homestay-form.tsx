@@ -26,7 +26,34 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
+    
+    const newHomestay = {
+      name,
+      address,
+      base_price: Number(basePrice),
+      capacity: Number(capacity),
+      extra_person_fee: Number(extraPersonFee),
+      commission_rate: Number(commissionRate),
+      karpet_price: Number(karpetPrice),
+      extrabed_price: Number(extrabedPrice),
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isEdit && initialData?.id) {
+      const idx = MOCK_HOMESTAYS.findIndex(h => h.id === initialData.id);
+      if (idx >= 0) {
+        MOCK_HOMESTAYS[idx] = { ...MOCK_HOMESTAYS[idx], ...newHomestay } as any;
+      }
+    } else {
+      MOCK_HOMESTAYS.push({
+        ...newHomestay,
+        id: `HS-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        image_url: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
+        created_at: new Date().toISOString(),
+      } as any);
+    }
+
     setSaved(true);
     setTimeout(() => router.push('/homestay'), 1500);
   };

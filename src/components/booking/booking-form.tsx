@@ -85,6 +85,35 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const newBooking = {
+      homestay_id: homestayId,
+      guest_name: guestName,
+      guest_phone: guestPhone,
+      check_in: checkIn,
+      check_out: checkOut,
+      guest_count: guestCount,
+      notes: notes,
+      status: status,
+      extras: extras,
+      extras_charge: activeExtras.reduce((sum, ext) => sum + (ext.price * ext.quantity * price.nights), 0),
+      total_price: price.totalPrice,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (isEdit && initialData?.id) {
+      const idx = MOCK_BOOKINGS.findIndex(b => b.id === initialData.id);
+      if (idx >= 0) {
+        MOCK_BOOKINGS[idx] = { ...MOCK_BOOKINGS[idx], ...newBooking } as any;
+      }
+    } else {
+      MOCK_BOOKINGS.unshift({
+        ...newBooking,
+        id: `BK-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        created_at: new Date().toISOString(),
+      } as any);
+    }
+
     setSaved(true);
     setTimeout(() => router.push('/booking'), 1500);
   };
