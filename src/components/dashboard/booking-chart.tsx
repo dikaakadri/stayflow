@@ -48,7 +48,7 @@ export function BookingChart({ data }: BookingChartProps) {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [value, 'Booking']}
+              formatter={(value: any) => [value, 'Booking']}
             />
             <Bar
               dataKey="bookings"
@@ -96,7 +96,7 @@ export function GuestChart({ data }: BookingChartProps) {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [value, 'Tamu']}
+              formatter={(value: any) => [value, 'Tamu']}
             />
             <Bar
               dataKey="guests"
