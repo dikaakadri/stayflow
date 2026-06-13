@@ -33,6 +33,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   const handleUpdateStatus = (newStatus: BookingStatus) => {
     setCurrentStatus(newStatus);
+    
+    // Update mock data so changes reflect on the list page
+    const idx = MOCK_BOOKINGS.findIndex((b) => b.id === id);
+    if (idx !== -1) {
+      MOCK_BOOKINGS[idx].status = newStatus;
+    }
+
     setShowStatusModal(false);
     setStatusSaved(true);
     setTimeout(() => setStatusSaved(false), 2000);

@@ -115,7 +115,10 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
     }
 
     setSaved(true);
-    setTimeout(() => router.push('/booking'), 1500);
+    setTimeout(() => {
+      router.refresh();
+      router.push('/booking');
+    }, 1500);
   };
 
   if (saved) {
