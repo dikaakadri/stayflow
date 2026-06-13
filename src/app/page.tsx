@@ -1,65 +1,153 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useMemo } from 'react';
+import { Banknote, CalendarCheck, Users, TrendingUp, Percent, Wallet, Building } from 'lucide-react';
+import { StatCard } from '@/components/dashboard/stat-card';
+import { RevenueChart } from '@/components/dashboard/revenue-chart';
+import { BookingChart, GuestChart } from '@/components/dashboard/booking-chart';
+import { TopPerformance } from '@/components/dashboard/top-performance';
+import { Notifications } from '@/components/dashboard/notifications';
+import { formatCurrency, formatNumber } from '@/lib/format';
+import {
+  MOCK_DASHBOARD_STATS,
+  MOCK_REVENUE_DATA,
+  MOCK_PERFORMANCE,
+  MOCK_HOMESTAYS,
+  getMockNotifications,
+} from '@/lib/mock-data';
+
+export default function DashboardPage() {
+  const [selectedHomestay, setSelectedHomestay] = useState('all');
+  
+  const stats = MOCK_DASHBOARD_STATS;
+  const revenueData = MOCK_REVENUE_DATA;
+  const performance = MOCK_PERFORMANCE;
+  const notifications = getMockNotifications();
+
+  // Hitung "Pendapatan Saya" berdasarkan komisi
+  const myRevenue = useMemo(() => {
+    if (selectedHomestay === 'all') {
+      // Rata-rata komisi 12% dari total jika all
+      return stats.month_revenue * 0.12; 
+    }
+    const homestay = MOCK_HOMESTAYS.find(h => h.id === selectedHomestay);
+    // Asumsi revenue dari stat ini kalau spesifik. Untuk demo, kita pakai stat.month_revenue * (commission/100)
+    const commissionRate = homestay?.commission_rate || 10;
+    return stats.month_revenue * (commissionRate / 100);
+  }, [selectedHomestay, stats.month_revenue]);
+
+  const today = new Date();
+  const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 17 ? 'Selamat Siang' : 'Selamat Malam';
+  const dateStr = today.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="px-4 pt-4 pb-6">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-5 animate-fade-in-up opacity-0">
+        <div>
+          <h1 className="text-xl font-bold text-text-primary">{greeting} 👋</h1>
+          <p className="text-xs text-text-secondary mt-0.5">{dateStr}</p>
+        </div>
+      </div>
+
+      {/* Filter Homestay */}
+      <div className="mb-5 animate-fade-in-up opacity-0 delay-1">
+        <div className="relative">
+           <Building size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+           <select 
+             value={selectedHomestay}
+             onChange={(e) => setSelectedHomestay(e.target.value)}
+             className="w-full h-12 pl-10 pr-4 bg-white dark:bg-surface border border-border-light rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none shadow-sm"
+           >
+              <option value="all">Semua Homestay</option>
+              {MOCK_HOMESTAYS.map(h => (
+                <option key={h.id} value={h.id}>{h.name} (Komisi {h.commission_rate}%)</option>
+              ))}
+           </select>
+        </div>
+      </div>
+
+      {/* Notifications */}
+      {notifications.length > 0 && (
+        <div className="mb-5">
+          <Notifications notifications={notifications} />
+        </div>
+      )}
+
+      {/* Stat Cards Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <StatCard
+          label="Pendapatan Saya"
+          value={formatCurrency(myRevenue)}
+          icon={TrendingUp}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-50"
+          delay={1}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <StatCard
+          label="Omset Kotor"
+          value={formatCurrency(stats.month_revenue)}
+          icon={Wallet}
+          iconColor="text-emerald-600"
+          iconBg="bg-emerald-50"
+          trend="12%"
+          trendUp={true}
+          delay={2}
+        />
+        <StatCard
+          label="Total Booking"
+          value={formatNumber(stats.month_bookings)}
+          icon={CalendarCheck}
+          iconColor="text-violet-600"
+          iconBg="bg-violet-50"
+          delay={3}
+        />
+        <StatCard
+          label="Total Tamu"
+          value={`${formatNumber(stats.month_guests)} org`}
+          icon={Users}
+          iconColor="text-amber-600"
+          iconBg="bg-amber-50"
+          delay={4}
+        />
+        <StatCard
+          label="Occupancy Rate"
+          value={`${stats.occupancy_rate}%`}
+          icon={Percent}
+          iconColor="text-sky-600"
+          iconBg="bg-sky-50"
+          delay={5}
+        />
+        <StatCard
+          label="Laba Bersih"
+          value={formatCurrency(stats.net_profit)}
+          icon={TrendingUp}
+          iconColor="text-emerald-600"
+          iconBg="bg-emerald-50"
+          trend="8%"
+          trendUp={true}
+          delay={6}
+        />
+      </div>
+
+      {/* Revenue Chart */}
+      <div className="mb-5">
+        <RevenueChart data={revenueData} />
+      </div>
+
+      {/* Booking & Guest Charts */}
+      <div className="space-y-5 mb-5">
+        <BookingChart data={revenueData} />
+        <GuestChart data={revenueData} />
+      </div>
+
+      {/* Top Performance */}
+      <TopPerformance data={performance} />
     </div>
   );
 }
