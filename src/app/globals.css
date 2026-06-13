@@ -49,23 +49,7 @@
   --info-light: #DBEAFE;
 }
 
-.dark {
-  --bg-color: #121212;
-  --fg-color: #F9FAFB;
-  --surface-color: #1E1E1E;
-  --surface-hover: #2A2A2A;
-  --border-color: #333333;
-  --border-light: #2A2A2A;
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
-  
-  --primary-light: rgba(37, 99, 235, 0.2);
-  --success-light: rgba(16, 185, 129, 0.2);
-  --warning-light: rgba(245, 158, 11, 0.2);
-  --danger-light: rgba(239, 68, 68, 0.2);
-  --info-light: rgba(59, 130, 246, 0.2);
-}
+
 
 * {
   -webkit-tap-highlight-color: transparent;

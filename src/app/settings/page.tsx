@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { Wallet, Users, FileText, Info, ChevronRight, Settings as SettingsIcon } from 'lucide-react';
 
-import { ThemeToggle } from '@/components/layout/theme-toggle';
 
 const SETTINGS_MENU = [
   { href: '/settings/expenses', label: 'Pengeluaran', icon: Wallet, color: 'text-rose-500', bg: 'bg-rose-50' },
@@ -43,10 +42,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Theme Toggle */}
-        <div className="animate-fade-in-up opacity-0 delay-2">
-           <ThemeToggle />
-        </div>
+
 
         {/* Menu Grid */}
         <div className="space-y-3">
