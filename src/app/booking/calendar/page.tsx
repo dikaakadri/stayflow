@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { MOCK_BOOKINGS, MOCK_HOMESTAYS } from '@/lib/mock-data';
+import { getBookings, getHomestays } from '@/lib/store';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
 import type { Booking } from '@/types';
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedHomestay, setSelectedHomestay] = useState(MOCK_HOMESTAYS[0]?.id || '');
+  const allHomestays = getHomestays();
+  const [selectedHomestay, setSelectedHomestay] = useState(allHomestays[0]?.id || '');
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -21,7 +22,7 @@ export default function CalendarPage() {
     end: endOfMonth(currentDate)
   });
 
-  const bookingsForHomestay = MOCK_BOOKINGS.filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
+  const bookingsForHomestay = getBookings().filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
 
   const getBookingsForDay = (day: Date) => {
     return bookingsForHomestay.filter(b => {
@@ -51,7 +52,7 @@ export default function CalendarPage() {
           onChange={(e) => setSelectedHomestay(e.target.value)}
           className="w-full h-12 px-4 mb-4 bg-surface border border-border-light rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none animate-fade-in-up"
         >
-          {MOCK_HOMESTAYS.map(h => (
+          {allHomestays.map(h => (
             <option key={h.id} value={h.id}>{h.name}</option>
           ))}
         </select>

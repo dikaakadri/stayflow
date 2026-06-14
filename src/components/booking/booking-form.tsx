@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { usePriceCalculator } from '@/hooks/use-price-calculator';
-import { MOCK_HOMESTAYS, MOCK_BOOKINGS } from '@/lib/mock-data';
+import { getHomestays, getBookings, addBooking, updateBooking } from '@/lib/store';
 import { formatCurrency } from '@/lib/format';
 import { Check, AlertTriangle, Plus, Minus } from 'lucide-react';
 import type { BookingStatus, ExtraFacility } from '@/types';
@@ -39,7 +39,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const [extras, setExtras] = useState<ExtraFacility[]>(initialData?.extras || []);
   const [saved, setSaved] = useState(false);
 
-  const activeHomestays = MOCK_HOMESTAYS.filter((h) => h.is_active);
+  const activeHomestays = getHomestays().filter((h) => h.is_active);
   const selectedHomestay = activeHomestays.find((h) => h.id === homestayId) || null;
 
   // Reset extras when homestay changes (use per-homestay pricing)
@@ -67,7 +67,8 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   // Double booking detection
   const conflicts = useMemo(() => {
     if (!homestayId || !checkIn || !checkOut) return [];
-    return MOCK_BOOKINGS.filter(
+    const allBookings = getBookings();
+    return allBookings.filter(
       (b) =>
         b.homestay_id === homestayId &&
         b.status !== 'cancelled' &&
@@ -86,7 +87,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newBooking = {
+    const bookingData = {
       homestay_id: homestayId,
       guest_name: guestName,
       guest_phone: guestPhone,
@@ -95,22 +96,23 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
       guest_count: guestCount,
       notes: notes,
       status: status,
-      extras: extras,
+      extras: extras.filter(e => e.quantity > 0),
       extras_charge: activeExtras.reduce((sum, ext) => sum + (ext.price * ext.quantity * price.nights), 0),
+      base_price: selectedHomestay?.base_price || 0,
+      extra_charge: price.extraChargeTotal,
+      nights: price.nights,
       total_price: price.totalPrice,
       updated_at: new Date().toISOString(),
     };
 
     if (isEdit && initialData?.id) {
-      const idx = MOCK_BOOKINGS.findIndex(b => b.id === initialData.id);
-      if (idx >= 0) {
-        MOCK_BOOKINGS[idx] = { ...MOCK_BOOKINGS[idx], ...newBooking } as any;
-      }
+      updateBooking(initialData.id, bookingData);
     } else {
-      MOCK_BOOKINGS.unshift({
-        ...newBooking,
+      addBooking({
+        ...bookingData,
         id: `BK-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         created_at: new Date().toISOString(),
+        homestay: selectedHomestay || undefined,
       } as any);
     }
 

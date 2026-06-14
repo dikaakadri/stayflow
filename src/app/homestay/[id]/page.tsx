@@ -3,11 +3,11 @@
 import { use } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { HomestayForm } from '@/components/homestay/homestay-form';
-import { MOCK_HOMESTAYS } from '@/lib/mock-data';
+import { getHomestays } from '@/lib/store';
 
 export default function EditHomestayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const homestay = MOCK_HOMESTAYS.find((h) => h.id === id);
+  const homestay = getHomestays().find((h) => h.id === id);
 
   if (!homestay) {
     return (

@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { HomestayCard } from '@/components/homestay/homestay-card';
-import { MOCK_HOMESTAYS } from '@/lib/mock-data';
+import { getHomestays, deleteHomestay } from '@/lib/store';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 export default function HomestayPage() {
-  const [homestays, setHomestays] = useState(MOCK_HOMESTAYS);
+  const [homestays, setHomestays] = useState(getHomestays());
 
   const handleDelete = (id: string) => {
-    // In real app, call Supabase delete here
-    setHomestays(prev => prev.filter(h => h.id !== id));
+    const updated = deleteHomestay(id);
+    setHomestays(updated);
   };
 
   return (

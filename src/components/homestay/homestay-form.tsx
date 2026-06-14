@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Homestay } from '@/types';
 import { Check } from 'lucide-react';
-import { MOCK_HOMESTAYS } from '@/lib/mock-data';
+import { addHomestay, updateHomestay } from '@/lib/store';
 
 interface HomestayFormProps {
   initialData?: Homestay;
@@ -28,7 +28,7 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newHomestay = {
+    const homestayData = {
       name,
       address,
       base_price: Number(basePrice),
@@ -42,21 +42,21 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
     };
 
     if (isEdit && initialData?.id) {
-      const idx = MOCK_HOMESTAYS.findIndex(h => h.id === initialData.id);
-      if (idx >= 0) {
-        MOCK_HOMESTAYS[idx] = { ...MOCK_HOMESTAYS[idx], ...newHomestay } as any;
-      }
+      updateHomestay(initialData.id, homestayData);
     } else {
-      MOCK_HOMESTAYS.push({
-        ...newHomestay,
+      addHomestay({
+        ...homestayData,
         id: `HS-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-        image_url: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
         created_at: new Date().toISOString(),
-      } as any);
+      } as Homestay);
     }
 
     setSaved(true);
-    setTimeout(() => router.push('/homestay'), 1500);
+    setTimeout(() => {
+      router.refresh();
+      router.push('/homestay');
+    }, 1500);
   };
 
   if (saved) {

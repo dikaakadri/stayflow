@@ -3,12 +3,12 @@
 import { use } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import BookingFormPage from '@/components/booking/booking-form';
-import { MOCK_BOOKINGS } from '@/lib/mock-data';
+import { getBookings } from '@/lib/store';
 import { getExtraFacilityOptions } from '@/types';
 
 export default function EditBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const booking = MOCK_BOOKINGS.find((b) => b.id === id);
+  const booking = getBookings().find((b) => b.id === id);
 
   if (!booking) {
     return (

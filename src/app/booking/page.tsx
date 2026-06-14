@@ -5,7 +5,7 @@ import { Plus, Search, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { BookingCard } from '@/components/booking/booking-card';
-import { MOCK_BOOKINGS } from '@/lib/mock-data';
+import { getBookings } from '@/lib/store';
 import type { BookingStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -21,7 +21,9 @@ export default function BookingPage() {
   const [activeTab, setActiveTab] = useState<BookingStatus | 'all'>('all');
   const [search, setSearch] = useState('');
 
-  const filteredBookings = MOCK_BOOKINGS.filter((b) => {
+  const allBookings = getBookings();
+
+  const filteredBookings = allBookings.filter((b) => {
     const matchStatus = activeTab === 'all' || b.status === activeTab;
     const matchSearch =
       !search ||

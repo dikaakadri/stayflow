@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/booking/status-badge';
-import { MOCK_BOOKINGS } from '@/lib/mock-data';
+import { getBookings, updateBookingStatus } from '@/lib/store';
 import { formatCurrency, formatDate, formatPhone } from '@/lib/format';
 import { Calendar, Users, Phone, MessageSquare, Home, Clock, Package, Pencil, RefreshCw, Check } from 'lucide-react';
 import type { BookingStatus } from '@/types';
@@ -13,7 +13,7 @@ import type { BookingStatus } from '@/types';
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const booking = MOCK_BOOKINGS.find((b) => b.id === id);
+  const booking = getBookings().find((b) => b.id === id);
   const [currentStatus, setCurrentStatus] = useState<BookingStatus | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusSaved, setStatusSaved] = useState(false);
@@ -34,11 +34,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const handleUpdateStatus = (newStatus: BookingStatus) => {
     setCurrentStatus(newStatus);
     
-    // Update mock data so changes reflect on the list page
-    const idx = MOCK_BOOKINGS.findIndex((b) => b.id === id);
-    if (idx !== -1) {
-      MOCK_BOOKINGS[idx].status = newStatus;
-    }
+    // Save to localStorage so changes persist
+    updateBookingStatus(id, newStatus);
 
     setShowStatusModal(false);
     setStatusSaved(true);
