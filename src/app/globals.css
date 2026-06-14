@@ -52,7 +52,7 @@
 
 
 * {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
 }
 
 html {
@@ -68,8 +68,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button, a, input, select, textarea {
+/* iOS Safari: ensure all interactive elements respond to touch */
+button, a, input, select, textarea, [role="button"] {
   touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Clickable divs need cursor:pointer for iOS Safari */
+[onclick], .cursor-pointer {
+  cursor: pointer;
 }
 
 /* ============================================================

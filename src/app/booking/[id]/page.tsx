@@ -158,8 +158,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               {(['pending', 'dp', 'paid', 'cancelled'] as BookingStatus[]).map((s) => (
                 <button
                   key={s}
+                  type="button"
                   onClick={() => handleUpdateStatus(s)}
-                  className={`h-11 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] ${
+                  className={`h-12 rounded-xl text-sm font-semibold transition-all ${
                     s === 'pending'
                       ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                       : s === 'dp'
@@ -174,8 +175,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               ))}
             </div>
             <button
+              type="button"
               onClick={() => setShowStatusModal(false)}
-              className="w-full mt-2 h-10 text-sm text-text-secondary hover:text-text-primary transition-colors"
+              className="w-full mt-2 h-12 text-sm text-text-secondary hover:text-text-primary transition-colors rounded-xl"
             >
               Batal
             </button>
@@ -192,8 +194,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             Edit Booking
           </Link>
           <button
+            type="button"
             onClick={() => setShowStatusModal(!showStatusModal)}
-            className="h-12 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="h-12 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-dark transition-all flex items-center justify-center gap-2"
           >
             <RefreshCw size={16} />
             Update Status

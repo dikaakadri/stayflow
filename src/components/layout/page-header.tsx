@@ -26,11 +26,12 @@ export function PageHeader({ title, subtitle, showBack = false, action, classNam
         <div className="flex items-center gap-3 min-w-0">
           {showBack && (
             <button
+              type="button"
               onClick={() => router.back()}
-              className="flex items-center justify-center w-9 h-9 -ml-1 rounded-xl hover:bg-white/15 active:scale-95 transition-all"
+              className="flex items-center justify-center w-11 h-11 -ml-2 rounded-xl hover:bg-white/15 active:scale-95 transition-all"
               aria-label="Back"
             >
-              <ArrowLeft size={20} className="text-white" />
+              <ArrowLeft size={22} className="text-white" />
             </button>
           )}
           <div className="min-w-0">

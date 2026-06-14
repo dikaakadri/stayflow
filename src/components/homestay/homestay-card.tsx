@@ -21,8 +21,9 @@ export function HomestayCard({ homestay, bookingCount = 0, totalRevenue = 0, onD
     router.push(`/homestay/${homestay.id}`);
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+  const handleDelete = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (confirm(`Yakin ingin menghapus homestay "${homestay.name}"? Data yang dihapus tidak bisa dikembalikan.`)) {
       onDelete?.(homestay.id);
     }
@@ -30,6 +31,8 @@ export function HomestayCard({ homestay, bookingCount = 0, totalRevenue = 0, onD
 
   return (
     <div 
+      role="button"
+      tabIndex={0}
       onClick={handleCardClick}
       className="card card-hover p-0 overflow-hidden group cursor-pointer"
     >
@@ -75,9 +78,9 @@ export function HomestayCard({ homestay, bookingCount = 0, totalRevenue = 0, onD
                <button 
                  type="button"
                  onClick={handleDelete}
-                 className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors ml-1 z-10 relative"
+                 className="flex items-center justify-center w-11 h-11 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors ml-1 z-10 relative"
                >
-                 <Trash2 size={16} />
+                 <Trash2 size={20} />
                </button>
             ) : (
               <ChevronRight size={16} className="text-text-tertiary" />
@@ -109,3 +112,4 @@ export function HomestayCard({ homestay, bookingCount = 0, totalRevenue = 0, onD
     </div>
   );
 }
+
