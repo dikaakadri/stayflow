@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { usePriceCalculator } from '@/hooks/use-price-calculator';

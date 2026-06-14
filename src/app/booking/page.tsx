@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
