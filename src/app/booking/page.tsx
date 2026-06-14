@@ -25,8 +25,6 @@ export default function BookingPage() {
 
   const allBookings = getBookings();
 
-  if (!mounted) return null;
-
   const filteredBookings = allBookings.filter((b) => {
     const matchStatus = activeTab === 'all' || b.status === activeTab;
     const matchSearch =
@@ -45,12 +43,17 @@ export default function BookingPage() {
             href="/booking/calendar"
             className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-surface transition-all"
           >
-            <Calendar size={20} className="text-text-secondary" />
+            <Calendar size={20} className="text-white" />
           </Link>
         }
       />
 
-      <div className="px-4 pt-4 pb-6">
+      {!mounted ? (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="px-4 pt-4 pb-6">
         {/* Search */}
         <div className="relative mb-4 animate-fade-in">
           <Search

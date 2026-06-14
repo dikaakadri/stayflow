@@ -12,11 +12,9 @@ import { useMounted } from '@/hooks/use-mounted';
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const mounted = useMounted();
   const allHomestays = getHomestays();
   const [selectedHomestay, setSelectedHomestay] = useState(allHomestays[0]?.id || '');
-  const mounted = useMounted();
-
-  if (!mounted) return null;
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -49,17 +47,22 @@ export default function CalendarPage() {
     <div className="min-h-screen flex flex-col">
       <PageHeader title="Kalender Booking" showBack />
 
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Homestay Selector */}
-        <select
-          value={selectedHomestay}
-          onChange={(e) => setSelectedHomestay(e.target.value)}
-          className="w-full h-12 px-4 mb-4 bg-surface border border-border-light rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none animate-fade-in-up"
-        >
-          {allHomestays.map(h => (
-            <option key={h.id} value={h.id}>{h.name}</option>
-          ))}
-        </select>
+      {!mounted ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="p-4 flex-1 flex flex-col">
+          {/* Homestay Selector */}
+          <select
+            value={selectedHomestay}
+            onChange={(e) => setSelectedHomestay(e.target.value)}
+            className="w-full h-12 px-4 mb-4 bg-surface border border-border-light rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none animate-fade-in-up"
+          >
+            {allHomestays.map(h => (
+              <option key={h.id} value={h.id}>{h.name}</option>
+            ))}
+          </select>
 
         <div className="card flex-1 flex flex-col animate-fade-in-up delay-1">
           {/* Calendar Header */}
@@ -148,7 +151,8 @@ export default function CalendarPage() {
              </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

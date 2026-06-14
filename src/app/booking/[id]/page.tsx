@@ -20,8 +20,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [statusSaved, setStatusSaved] = useState(false);
   const mounted = useMounted();
 
-  if (!mounted) return null;
-
   if (!booking) {
     return (
       <div>
@@ -50,7 +48,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     <div>
       <PageHeader title="Detail Booking" showBack />
 
-      <div className="px-4 pt-4 pb-6 space-y-4">
+      {!mounted ? (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="px-4 pt-4 pb-6 space-y-4">
         {/* Status Saved Toast */}
         {statusSaved && (
           <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl animate-fade-in">
@@ -206,7 +209,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             Update Status
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
