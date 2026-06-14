@@ -4,10 +4,10 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/page-header';
 import { usePriceCalculator } from '@/hooks/use-price-calculator';
-import { getHomestays, getBookings, addBooking, updateBooking } from '@/lib/store';
+import { getHomestays, getBookings, addBooking, updateBooking } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { Check, AlertTriangle, Plus, Minus } from 'lucide-react';
-import type { BookingStatus, ExtraFacility } from '@/types';
+import type { BookingStatus, ExtraFacility, Homestay, Booking } from '@/types';
 import { getExtraFacilityOptions } from '@/types';
 import { useMounted } from '@/hooks/use-mounted';
 
@@ -39,9 +39,28 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const [status, setStatus] = useState<BookingStatus>(initialData?.status || 'pending');
   const [extras, setExtras] = useState<ExtraFacility[]>(initialData?.extras || []);
   const [saved, setSaved] = useState(false);
-  const mounted = useMounted();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Data State
+  const [activeHomestays, setActiveHomestays] = useState<Homestay[]>([]);
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const activeHomestays = getHomestays().filter((h) => h.is_active);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [hData, bData] = await Promise.all([getHomestays(), getBookings()]);
+        setActiveHomestays(hData.filter((h) => h.is_active));
+        setAllBookings(bData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
   const selectedHomestay = activeHomestays.find((h) => h.id === homestayId) || null;
 
   // Reset extras when homestay changes (use per-homestay pricing)
@@ -69,7 +88,6 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   // Double booking detection
   const conflicts = useMemo(() => {
     if (!homestayId || !checkIn || !checkOut) return [];
-    const allBookings = getBookings();
     return allBookings.filter(
       (b) =>
         b.homestay_id === homestayId &&
@@ -78,7 +96,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
         b.check_out > checkIn &&
         (!isEdit || b.id !== initialData?.id)
     );
-  }, [homestayId, checkIn, checkOut, isEdit, initialData?.id]);
+  }, [homestayId, checkIn, checkOut, isEdit, initialData?.id, allBookings]);
 
   const updateExtraQuantity = (id: string, delta: number) => {
     setExtras(prev => prev.map(ext =>
@@ -86,43 +104,43 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
     ));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    const bookingData = {
-      homestay_id: homestayId,
-      guest_name: guestName,
-      guest_phone: guestPhone,
-      check_in: checkIn,
-      check_out: checkOut,
-      guest_count: guestCount,
-      notes: notes,
-      status: status,
-      extras: extras.filter(e => e.quantity > 0),
-      extras_charge: activeExtras.reduce((sum, ext) => sum + (ext.price * ext.quantity * price.nights), 0),
-      base_price: selectedHomestay?.base_price || 0,
-      extra_charge: price.extraChargeTotal,
-      nights: price.nights,
-      total_price: price.totalPrice,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      const bookingData = {
+        homestay_id: homestayId,
+        guest_name: guestName,
+        guest_phone: guestPhone,
+        check_in: checkIn,
+        check_out: checkOut,
+        guest_count: guestCount,
+        notes: notes,
+        status: status,
+        extras: extras.filter(e => e.quantity > 0),
+        extras_charge: activeExtras.reduce((sum, ext) => sum + (ext.price * ext.quantity * price.nights), 0),
+        base_price: selectedHomestay?.base_price || 0,
+        extra_charge: price.extraChargeTotal,
+        nights: price.nights,
+        total_price: price.totalPrice,
+      };
 
-    if (isEdit && initialData?.id) {
-      updateBooking(initialData.id, bookingData);
-    } else {
-      addBooking({
-        ...bookingData,
-        id: `BK-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-        created_at: new Date().toISOString(),
-        homestay: selectedHomestay || undefined,
-      } as any);
+      if (isEdit && initialData?.id) {
+        await updateBooking(initialData.id, bookingData);
+      } else {
+        await addBooking(bookingData);
+      }
+
+      setSaved(true);
+      setTimeout(() => {
+        router.refresh();
+        router.push('/booking');
+      }, 1500);
+    } catch (err) {
+      console.error("Error saving booking:", err);
+      setIsSubmitting(false);
     }
-
-    setSaved(true);
-    setTimeout(() => {
-      router.refresh();
-      router.push('/booking');
-    }, 1500);
   };
 
   if (saved) {
@@ -141,7 +159,13 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
     );
   }
 
-  if (!mounted) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] px-4">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pt-4 pb-6 space-y-4">
@@ -392,13 +416,13 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
       )}
 
       {/* Submit */}
-      <button
-        type="submit"
-        disabled={!homestayId || !guestName || !checkIn || !checkOut}
-        className="w-full h-13 bg-primary text-white font-semibold rounded-xl text-sm shadow-sm hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
-      >
-        {isEdit ? 'Simpan Perubahan' : 'Simpan Booking'}
-      </button>
+        <button
+          type="submit"
+          disabled={!homestayId || !guestName || !checkIn || !checkOut || !!conflicts.length || isSubmitting}
+          className="w-full h-13 bg-primary text-white font-semibold rounded-xl text-sm shadow-sm hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+        >
+          {isSubmitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Buat Booking'}
+        </button>
     </form>
   );
 }

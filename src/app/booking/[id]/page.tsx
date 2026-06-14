@@ -1,11 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/booking/status-badge';
-import { getBookings, updateBookingStatus } from '@/lib/store';
+import { getBooking, updateBookingStatus } from '@/lib/api';
+import type { Booking } from '@/types';
 import { formatCurrency, formatDate, formatPhone } from '@/lib/format';
 import { Calendar, Users, Phone, MessageSquare, Home, Clock, Package, Pencil, RefreshCw, Check } from 'lucide-react';
 import type { BookingStatus } from '@/types';
@@ -14,43 +15,55 @@ import { useMounted } from '@/hooks/use-mounted';
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const booking = getBookings().find((b) => b.id === id);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [currentStatus, setCurrentStatus] = useState<BookingStatus | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusSaved, setStatusSaved] = useState(false);
-  const mounted = useMounted();
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!booking) {
-    return (
-      <div>
-        <PageHeader title="Detail Booking" showBack />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <p className="text-sm text-text-secondary">Booking tidak ditemukan</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getBooking(id);
+        setBooking(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
 
-  const displayStatus = currentStatus || booking.status;
+  const displayStatus = currentStatus || booking?.status || 'pending';
 
-  const handleUpdateStatus = (newStatus: BookingStatus) => {
-    setCurrentStatus(newStatus);
-    
-    // Save to localStorage so changes persist
-    updateBookingStatus(id, newStatus);
-
-    setShowStatusModal(false);
-    setStatusSaved(true);
-    setTimeout(() => setStatusSaved(false), 2000);
+  const handleUpdateStatus = async (newStatus: BookingStatus) => {
+    try {
+      setCurrentStatus(newStatus);
+      await updateBookingStatus(id, newStatus);
+      setShowStatusModal(false);
+      setStatusSaved(true);
+      setTimeout(() => setStatusSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+      // Revert status on error
+      if (booking) {
+        setCurrentStatus(booking.status);
+      }
+    }
   };
 
   return (
     <div>
       <PageHeader title="Detail Booking" showBack />
 
-      {!mounted ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : !booking ? (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <p className="text-sm text-text-secondary">Booking tidak ditemukan</p>
         </div>
       ) : (
         <div className="px-4 pt-4 pb-6 space-y-4">

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Homestay } from '@/types';
 import { Check } from 'lucide-react';
-import { addHomestay, updateHomestay } from '@/lib/store';
+import { addHomestay, updateHomestay } from '@/lib/api';
 import { useMounted } from '@/hooks/use-mounted';
 
 interface HomestayFormProps {
@@ -25,10 +25,12 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
   const [imageUrl, setImageUrl] = useState(initialData?.image_url || '');
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
   const [saved, setSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const mounted = useMounted();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     const homestayData = {
       name,
@@ -43,22 +45,25 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
       updated_at: new Date().toISOString(),
     };
 
-    if (isEdit && initialData?.id) {
-      updateHomestay(initialData.id, homestayData);
-    } else {
-      addHomestay({
-        ...homestayData,
-        id: `HS-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-        image_url: imageUrl || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
-        created_at: new Date().toISOString(),
-      } as Homestay);
-    }
+    try {
+      if (isEdit && initialData?.id) {
+        await updateHomestay(initialData.id, homestayData);
+      } else {
+        await addHomestay({
+          ...homestayData,
+          image_url: imageUrl || 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=800&q=80',
+        } as any);
+      }
 
-    setSaved(true);
-    setTimeout(() => {
-      router.refresh();
-      router.push('/homestay');
-    }, 1500);
+      setSaved(true);
+      setTimeout(() => {
+        router.refresh();
+        router.push('/homestay');
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setIsSubmitting(false);
+    }
   };
 
   if (saved) {
@@ -206,9 +211,10 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
 
       <button
         type="submit"
-        className="w-full h-13 bg-primary text-white font-semibold rounded-xl text-sm shadow-sm hover:bg-primary-dark active:scale-[0.98] transition-all mt-4 animate-fade-in-up opacity-0 delay-6"
+        disabled={!name || !basePrice || isSubmitting}
+        className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-sm hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all text-lg"
       >
-        Simpan Homestay
+        {isSubmitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan Homestay'}
       </button>
     </form>
   );

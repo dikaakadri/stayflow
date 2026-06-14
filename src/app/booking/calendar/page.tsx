@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { getBookings, getHomestays } from '@/lib/store';
+import { getBookings, getHomestays } from '@/lib/api';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
 import type { Booking } from '@/types';
@@ -12,9 +12,28 @@ import { useMounted } from '@/hooks/use-mounted';
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const mounted = useMounted();
-  const allHomestays = getHomestays();
-  const [selectedHomestay, setSelectedHomestay] = useState(allHomestays[0]?.id || '');
+  const [allHomestays, setAllHomestays] = useState<any[]>([]);
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
+  const [selectedHomestay, setSelectedHomestay] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [hData, bData] = await Promise.all([getHomestays(), getBookings()]);
+        setAllHomestays(hData);
+        setAllBookings(bData);
+        if (hData.length > 0) {
+          setSelectedHomestay(hData[0].id);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -24,7 +43,7 @@ export default function CalendarPage() {
     end: endOfMonth(currentDate)
   });
 
-  const bookingsForHomestay = getBookings().filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
+  const bookingsForHomestay = allBookings.filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
 
   const getBookingsForDay = (day: Date) => {
     return bookingsForHomestay.filter(b => {
@@ -47,7 +66,7 @@ export default function CalendarPage() {
     <div className="min-h-screen flex flex-col">
       <PageHeader title="Kalender Booking" showBack />
 
-      {!mounted ? (
+      {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>

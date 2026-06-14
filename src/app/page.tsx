@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Banknote, CalendarCheck, Users, TrendingUp, Percent, Wallet, Building } from 'lucide-react';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
@@ -12,12 +12,29 @@ import {
   MOCK_DASHBOARD_STATS,
   MOCK_REVENUE_DATA,
   MOCK_PERFORMANCE,
-  MOCK_HOMESTAYS,
   getMockNotifications,
 } from '@/lib/mock-data';
+import { getHomestays } from '@/lib/api';
+import type { Homestay } from '@/types';
 
 export default function DashboardPage() {
   const [selectedHomestay, setSelectedHomestay] = useState('all');
+  const [homestays, setHomestays] = useState<Homestay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getHomestays();
+        setHomestays(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
   
   const stats = MOCK_DASHBOARD_STATS;
   const revenueData = MOCK_REVENUE_DATA;
@@ -30,11 +47,11 @@ export default function DashboardPage() {
       // Rata-rata komisi 12% dari total jika all
       return stats.month_revenue * 0.12; 
     }
-    const homestay = MOCK_HOMESTAYS.find(h => h.id === selectedHomestay);
+    const homestay = homestays.find(h => h.id === selectedHomestay);
     // Asumsi revenue dari stat ini kalau spesifik. Untuk demo, kita pakai stat.month_revenue * (commission/100)
     const commissionRate = homestay?.commission_rate || 10;
     return stats.month_revenue * (commissionRate / 100);
-  }, [selectedHomestay, stats.month_revenue]);
+  }, [selectedHomestay, stats.month_revenue, homestays]);
 
   const today = new Date();
   const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 17 ? 'Selamat Siang' : 'Selamat Malam';
@@ -54,6 +71,13 @@ export default function DashboardPage() {
           <p className="text-xs text-text-secondary mt-0.5">{dateStr}</p>
         </div>
       </div>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <>
 
       {/* Filter Homestay */}
       <div className="mb-5 animate-fade-in-up opacity-0 delay-1">
@@ -65,8 +89,8 @@ export default function DashboardPage() {
              className="w-full h-12 pl-10 pr-4 bg-white dark:bg-surface border border-border-light rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none shadow-sm"
            >
               <option value="all">Semua Homestay</option>
-              {MOCK_HOMESTAYS.map(h => (
-                <option key={h.id} value={h.id}>{h.name} (Komisi {h.commission_rate}%)</option>
+              {homestays.map(h => (
+                <option key={h.id} value={h.id}>{h.name} (Komisi {h.commission_rate || 10}%)</option>
               ))}
            </select>
         </div>
@@ -146,8 +170,9 @@ export default function DashboardPage() {
         <GuestChart data={revenueData} />
       </div>
 
-      {/* Top Performance */}
       <TopPerformance data={performance} />
+        </>
+      )}
     </div>
   );
 }

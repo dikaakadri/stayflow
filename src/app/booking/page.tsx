@@ -5,7 +5,8 @@ import { Plus, Search, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 import { BookingCard } from '@/components/booking/booking-card';
-import { getBookings } from '@/lib/store';
+import { getBookings } from '@/lib/api';
+import type { Booking } from '@/types';
 import type { BookingStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/hooks/use-mounted';
@@ -21,9 +22,22 @@ const TABS: { key: BookingStatus | 'all'; label: string }[] = [
 export default function BookingPage() {
   const [activeTab, setActiveTab] = useState<BookingStatus | 'all'>('all');
   const [search, setSearch] = useState('');
-  const mounted = useMounted();
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const allBookings = getBookings();
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getBookings();
+        setAllBookings(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const filteredBookings = allBookings.filter((b) => {
     const matchStatus = activeTab === 'all' || b.status === activeTab;
@@ -48,7 +62,7 @@ export default function BookingPage() {
         }
       />
 
-      {!mounted ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>

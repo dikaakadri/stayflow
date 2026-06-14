@@ -1,18 +1,41 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import BookingFormPage from '@/components/booking/booking-form';
-import { getBookings } from '@/lib/store';
+import { getBooking } from '@/lib/api';
+import type { Booking } from '@/types';
 import { getExtraFacilityOptions } from '@/types';
-import { useMounted } from '@/hooks/use-mounted';
 
 export default function EditBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const booking = getBookings().find((b) => b.id === id);
-  const mounted = useMounted();
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getBooking(id);
+        setBooking(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div>
+        <PageHeader title="Edit Booking" showBack />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (!booking) {
     return (

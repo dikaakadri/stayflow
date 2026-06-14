@@ -1,20 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { HomestayCard } from '@/components/homestay/homestay-card';
-import { getHomestays, deleteHomestay } from '@/lib/store';
+import { getHomestays, deleteHomestay } from '@/lib/api';
+import type { Homestay } from '@/types';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useMounted } from '@/hooks/use-mounted';
 
 export default function HomestayPage() {
-  const [homestays, setHomestays] = useState(getHomestays());
-  const mounted = useMounted();
+  const [homestays, setHomestays] = useState<Homestay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleDelete = (id: string) => {
-    const updated = deleteHomestay(id);
-    setHomestays(updated);
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getHomestays();
+        setHomestays(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteHomestay(id);
+      setHomestays(homestays.filter(h => h.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -31,7 +50,7 @@ export default function HomestayPage() {
         }
       />
 
-      {!mounted ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
