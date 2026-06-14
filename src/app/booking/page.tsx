@@ -106,6 +106,7 @@ export default function BookingPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* FAB - New Booking */}
       <Link href="/booking/new" className="fab">

@@ -208,6 +208,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <RefreshCw size={16} />
             Update Status
           </button>
+          </div>
         </div>
       )}
     </div>
