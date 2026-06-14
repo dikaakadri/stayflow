@@ -29,8 +29,8 @@ export default function BookingPage() {
     const matchStatus = activeTab === 'all' || b.status === activeTab;
     const matchSearch =
       !search ||
-      b.guest_name.toLowerCase().includes(search.toLowerCase()) ||
-      b.homestay?.name.toLowerCase().includes(search.toLowerCase());
+      (b.guest_name && b.guest_name.toLowerCase().includes(search.toLowerCase())) ||
+      (b.homestay?.name && b.homestay.name.toLowerCase().includes(search.toLowerCase()));
     return matchStatus && matchSearch;
   });
 

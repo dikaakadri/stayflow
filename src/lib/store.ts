@@ -78,7 +78,7 @@ export function getBookings(): Booking[] {
   const bookings = loadFromStorage<Booking>(STORAGE_KEYS.bookings, DEFAULT_BOOKINGS);
   // Re-attach homestay references
   const homestays = getHomestays();
-  return bookings.map((b) => ({
+  return bookings.filter(b => b != null).map((b) => ({
     ...b,
     homestay: homestays.find((h) => h.id === b.homestay_id) || b.homestay,
   }));
