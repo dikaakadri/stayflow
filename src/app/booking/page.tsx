@@ -8,6 +8,7 @@ import { BookingCard } from '@/components/booking/booking-card';
 import { getBookings } from '@/lib/store';
 import type { BookingStatus } from '@/types';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/hooks/use-mounted';
 
 const TABS: { key: BookingStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'Semua' },
@@ -20,8 +21,11 @@ const TABS: { key: BookingStatus | 'all'; label: string }[] = [
 export default function BookingPage() {
   const [activeTab, setActiveTab] = useState<BookingStatus | 'all'>('all');
   const [search, setSearch] = useState('');
+  const mounted = useMounted();
 
   const allBookings = getBookings();
+
+  if (!mounted) return null;
 
   const filteredBookings = allBookings.filter((b) => {
     const matchStatus = activeTab === 'all' || b.status === activeTab;

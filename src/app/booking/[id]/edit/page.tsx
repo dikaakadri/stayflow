@@ -5,10 +5,14 @@ import { PageHeader } from '@/components/layout/page-header';
 import BookingFormPage from '@/components/booking/booking-form';
 import { getBookings } from '@/lib/store';
 import { getExtraFacilityOptions } from '@/types';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function EditBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const booking = getBookings().find((b) => b.id === id);
+  const mounted = useMounted();
+
+  if (!mounted) return null;
 
   if (!booking) {
     return (

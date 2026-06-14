@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Homestay } from '@/types';
 import { Check } from 'lucide-react';
 import { addHomestay, updateHomestay } from '@/lib/store';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface HomestayFormProps {
   initialData?: Homestay;
@@ -24,6 +25,7 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
   const [imageUrl, setImageUrl] = useState(initialData?.image_url || '');
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
   const [saved, setSaved] = useState(false);
+  const mounted = useMounted();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +73,8 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
       </div>
     );
   }
+
+  if (!mounted) return null;
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pt-4 pb-6 space-y-4">

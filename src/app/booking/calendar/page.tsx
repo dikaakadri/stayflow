@@ -8,11 +8,15 @@ import { getBookings, getHomestays } from '@/lib/store';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
 import type { Booking } from '@/types';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const allHomestays = getHomestays();
   const [selectedHomestay, setSelectedHomestay] = useState(allHomestays[0]?.id || '');
+  const mounted = useMounted();
+
+  if (!mounted) return null;
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));

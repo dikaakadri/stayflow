@@ -9,6 +9,7 @@ import { getBookings, updateBookingStatus } from '@/lib/store';
 import { formatCurrency, formatDate, formatPhone } from '@/lib/format';
 import { Calendar, Users, Phone, MessageSquare, Home, Clock, Package, Pencil, RefreshCw, Check } from 'lucide-react';
 import type { BookingStatus } from '@/types';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -17,6 +18,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [currentStatus, setCurrentStatus] = useState<BookingStatus | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusSaved, setStatusSaved] = useState(false);
+  const mounted = useMounted();
+
+  if (!mounted) return null;
 
   if (!booking) {
     return (

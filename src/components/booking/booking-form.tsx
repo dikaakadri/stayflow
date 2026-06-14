@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/format';
 import { Check, AlertTriangle, Plus, Minus } from 'lucide-react';
 import type { BookingStatus, ExtraFacility } from '@/types';
 import { getExtraFacilityOptions } from '@/types';
+import { useMounted } from '@/hooks/use-mounted';
 
 interface BookingFormProps {
   initialData?: {
@@ -38,6 +39,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const [status, setStatus] = useState<BookingStatus>(initialData?.status || 'pending');
   const [extras, setExtras] = useState<ExtraFacility[]>(initialData?.extras || []);
   const [saved, setSaved] = useState(false);
+  const mounted = useMounted();
 
   const activeHomestays = getHomestays().filter((h) => h.is_active);
   const selectedHomestay = activeHomestays.find((h) => h.id === homestayId) || null;
@@ -125,19 +127,21 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
 
   if (saved) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] px-4">
         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4 animate-fade-in-up">
           <Check size={32} className="text-emerald-500" />
         </div>
         <h2 className="text-lg font-bold text-text-primary animate-fade-in-up delay-1">
           Booking {isEdit ? 'Diperbarui' : 'Tersimpan'}!
         </h2>
-        <p className="text-sm text-text-secondary mt-1 animate-fade-in-up delay-2">
-          Mengalihkan ke daftar booking...
+        <p className="text-sm text-text-secondary mt-2 animate-fade-in-up delay-2 text-center">
+          Anda akan dialihkan ke daftar booking...
         </p>
       </div>
     );
   }
+
+  if (!mounted) return null;
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pt-4 pb-6 space-y-4">

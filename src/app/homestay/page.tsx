@@ -6,9 +6,13 @@ import { HomestayCard } from '@/components/homestay/homestay-card';
 import { getHomestays, deleteHomestay } from '@/lib/store';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { useMounted } from '@/hooks/use-mounted';
 
 export default function HomestayPage() {
   const [homestays, setHomestays] = useState(getHomestays());
+  const mounted = useMounted();
+
+  if (!mounted) return null;
 
   const handleDelete = (id: string) => {
     const updated = deleteHomestay(id);
