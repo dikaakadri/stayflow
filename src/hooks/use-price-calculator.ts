@@ -11,6 +11,7 @@ interface PriceCalculation {
   extraChargePerNight: number;
   extraChargeTotal: number;
   extrasCharge: number;
+  discount: number;
   totalPrice: number;
 }
 
@@ -20,9 +21,10 @@ interface UsePriceCalculatorProps {
   checkOut: string;
   guestCount: number;
   extras?: ExtraFacility[];
+  discount?: number;
 }
 
-export function usePriceCalculator({ homestay, checkIn, checkOut, guestCount, extras = [] }: UsePriceCalculatorProps): PriceCalculation {
+export function usePriceCalculator({ homestay, checkIn, checkOut, guestCount, extras = [], discount = 0 }: UsePriceCalculatorProps): PriceCalculation {
   return useMemo(() => {
     if (!homestay || !checkIn || !checkOut) {
       return {
@@ -33,6 +35,7 @@ export function usePriceCalculator({ homestay, checkIn, checkOut, guestCount, ex
         extraChargePerNight: 0,
         extraChargeTotal: 0,
         extrasCharge: 0,
+        discount: 0,
         totalPrice: 0,
       };
     }
@@ -55,8 +58,11 @@ export function usePriceCalculator({ homestay, checkIn, checkOut, guestCount, ex
     // Extra facilities calculation (price × quantity × nights)
     const extrasCharge = extras.reduce((sum, ext) => sum + (ext.price * ext.quantity * nights), 0);
 
+    // Discount calculation
+    const discountVal = discount || 0;
+
     // Total
-    const totalPrice = basePriceTotal + extraChargeTotal + extrasCharge;
+    const totalPrice = Math.max(0, basePriceTotal + extraChargeTotal + extrasCharge - discountVal);
 
     return {
       nights,
@@ -66,9 +72,10 @@ export function usePriceCalculator({ homestay, checkIn, checkOut, guestCount, ex
       extraChargePerNight,
       extraChargeTotal,
       extrasCharge,
+      discount: discountVal,
       totalPrice,
     };
-  }, [homestay, checkIn, checkOut, guestCount, extras]);
+  }, [homestay, checkIn, checkOut, guestCount, extras, discount]);
 }
 
 // Standalone calculation function for non-hook usage
@@ -77,7 +84,8 @@ export function calculatePrice(
   checkIn: string,
   checkOut: string,
   guestCount: number,
-  extras: ExtraFacility[] = []
+  extras: ExtraFacility[] = [],
+  discount: number = 0
 ): PriceCalculation {
   const checkInDate = new Date(checkIn);
   const checkOutDate = new Date(checkOut);
@@ -90,7 +98,8 @@ export function calculatePrice(
   const extraChargePerNight = extraPersonCount * homestay.extra_person_fee;
   const extraChargeTotal = extraChargePerNight * nights;
   const extrasCharge = extras.reduce((sum, ext) => sum + (ext.price * ext.quantity * nights), 0);
-  const totalPrice = basePriceTotal + extraChargeTotal + extrasCharge;
+  const discountVal = discount || 0;
+  const totalPrice = Math.max(0, basePriceTotal + extraChargeTotal + extrasCharge - discountVal);
 
   return {
     nights,
@@ -100,6 +109,7 @@ export function calculatePrice(
     extraChargePerNight,
     extraChargeTotal,
     extrasCharge,
+    discount: discountVal,
     totalPrice,
   };
 }

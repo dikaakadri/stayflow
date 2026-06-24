@@ -59,6 +59,7 @@ export interface Booking {
   extra_charge: number;
   extras: ExtraFacility[];
   extras_charge: number;
+  discount: number;
   total_price: number;
   nights: number;
   status: BookingStatus;

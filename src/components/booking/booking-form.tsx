@@ -23,6 +23,7 @@ interface BookingFormProps {
     notes: string;
     status: BookingStatus;
     extras: ExtraFacility[];
+    discount?: number;
   };
   isEdit?: boolean;
 }
@@ -38,6 +39,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [status, setStatus] = useState<BookingStatus>(initialData?.status || 'pending');
   const [extras, setExtras] = useState<ExtraFacility[]>(initialData?.extras || []);
+  const [discount, setDiscount] = useState<number>(initialData?.discount || 0);
   const [saved, setSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -84,6 +86,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
     checkOut,
     guestCount,
     extras: activeExtras,
+    discount,
   });
 
   // Double booking detection
@@ -122,6 +125,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
         status: status,
         extras: extras.filter(e => e.quantity > 0),
         extras_charge: activeExtras.reduce((sum, ext) => sum + (ext.price * ext.quantity * price.nights), 0),
+        discount: discount,
         base_price: selectedHomestay?.base_price || 0,
         extra_charge: price.extraChargeTotal,
         nights: price.nights,
@@ -373,6 +377,21 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
         </div>
       </div>
 
+      {/* Diskon (Rupiah) */}
+      <div className="animate-fade-in-up opacity-0 delay-3">
+        <label className="block text-xs font-semibold text-text-secondary mb-1.5">
+          Diskon (Rp)
+        </label>
+        <input
+          type="number"
+          min="0"
+          value={discount || ''}
+          onChange={(e) => setDiscount(Number(e.target.value))}
+          placeholder="0"
+          className="w-full h-12 px-4 bg-surface border border-border-light rounded-xl text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+        />
+      </div>
+
       {/* Catatan */}
       <div className="animate-fade-in-up opacity-0 delay-3">
         <label className="block text-xs font-semibold text-text-secondary mb-1.5">
@@ -422,6 +441,14 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
                 </span>
               </div>
             ))}
+            {price.discount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">Diskon</span>
+                <span className="font-semibold text-red-500">
+                  -{formatCurrency(price.discount)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-base pt-2 border-t border-primary/20">
               <span className="font-bold text-text-primary">Total</span>
               <span className="font-bold text-primary text-lg">
