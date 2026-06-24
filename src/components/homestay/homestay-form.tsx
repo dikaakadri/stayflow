@@ -60,8 +60,9 @@ export function HomestayForm({ initialData, isEdit }: HomestayFormProps) {
         router.refresh();
         router.push('/homestay');
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      alert('Gagal menyimpan: ' + (err?.message || JSON.stringify(err)));
       setIsSubmitting(false);
     }
   };
