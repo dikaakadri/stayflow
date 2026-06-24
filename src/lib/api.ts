@@ -5,12 +5,28 @@ import type { Homestay, Booking, Customer, Expense, DashboardStats, RevenueData,
 // Helper: bypass Supabase's strict generic types (no generated DB types in this project)
 const db = supabase as any;
 
+// Timeout wrapper — ensures every Supabase call settles within 15s.
+// iOS Safari can silently hang on network requests without ever resolving or rejecting.
+function withTimeout<T>(promise: Promise<T>, ms = 15000): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Request timeout setelah ${ms / 1000} detik. Cek koneksi internet Anda.`)),
+      ms
+    );
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
+
 // ---- Homestays ----
 export async function getHomestays(): Promise<Homestay[]> {
-  const { data, error } = await db
+  const { data, error } = await withTimeout(db
     .from('homestays')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }));
   if (error) throw error;
   return (data ?? []) as Homestay[];
 }
@@ -43,10 +59,10 @@ export async function deleteHomestay(id: string): Promise<void> {
 
 // ---- Customers ----
 export async function getCustomers(): Promise<Customer[]> {
-  const { data, error } = await db
+  const { data, error } = await withTimeout(db
     .from('customers')
     .select('*')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false }));
   if (error) throw error;
   return (data ?? []) as Customer[];
 }
@@ -79,20 +95,20 @@ export async function deleteCustomer(id: string): Promise<void> {
 
 // ---- Bookings ----
 export async function getBookings(): Promise<Booking[]> {
-  const { data, error } = await db
+  const { data, error } = await withTimeout(db
     .from('bookings')
     .select('*, homestay:homestays(*), customer:customers(*)')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }));
   if (error) throw error;
   return (data ?? []) as Booking[];
 }
 
 export async function getBooking(id: string): Promise<Booking> {
-  const { data, error } = await db
+  const { data, error } = await withTimeout(db
     .from('bookings')
     .select('*, homestay:homestays(*), customer:customers(*)')
     .eq('id', id)
-    .single();
+    .single());
   if (error) throw error;
   return data as Booking;
 }
@@ -129,10 +145,10 @@ export async function updateBookingStatus(id: string, status: Booking['status'])
 
 // ---- Expenses ----
 export async function getExpenses(): Promise<Expense[]> {
-  const { data, error } = await db
+  const { data, error } = await withTimeout(db
     .from('expenses')
     .select('*, homestay:homestays(*)')
-    .order('expense_date', { ascending: false });
+    .order('expense_date', { ascending: false }));
   if (error) throw error;
   return (data ?? []) as Expense[];
 }
@@ -170,25 +186,25 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
   const todayStr = now.toISOString().split('T')[0];
 
-  const { data: monthBookingsRaw, error: bookingError } = await db
+  const { data: monthBookingsRaw, error: bookingError } = await withTimeout(db
     .from('bookings')
     .select('*')
     .gte('check_in', startOfMonth)
     .lte('check_in', endOfMonth)
-    .neq('status', 'cancelled');
+    .neq('status', 'cancelled'));
   if (bookingError) throw bookingError;
 
-  const { data: expensesRaw, error: expenseError } = await db
+  const { data: expensesRaw, error: expenseError } = await withTimeout(db
     .from('expenses')
     .select('amount')
     .gte('expense_date', startOfMonth)
-    .lte('expense_date', endOfMonth);
+    .lte('expense_date', endOfMonth));
   if (expenseError) throw expenseError;
 
-  const { data: allHomestaysRaw, error: homestayError } = await db
+  const { data: allHomestaysRaw, error: homestayError } = await withTimeout(db
     .from('homestays')
     .select('id')
-    .eq('is_active', true);
+    .eq('is_active', true));
   if (homestayError) throw homestayError;
 
   const bookings = (monthBookingsRaw ?? []) as Booking[];
@@ -220,12 +236,12 @@ export async function getRevenueData(): Promise<RevenueData[]> {
     const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
     const monthLabel = date.toLocaleDateString('id-ID', { month: 'short' });
 
-    const { data } = await db
+    const { data } = await withTimeout(db
       .from('bookings')
       .select('total_price, guest_count')
       .gte('check_in', startOfMonth)
       .lte('check_in', endOfMonth)
-      .neq('status', 'cancelled');
+      .neq('status', 'cancelled'));
 
     const bookings = (data ?? []) as any[];
     results.push({
@@ -241,10 +257,10 @@ export async function getRevenueData(): Promise<RevenueData[]> {
 
 // ---- Top Homestay Performance ----
 export async function getHomestayPerformance(): Promise<HomestayPerformance[]> {
-  const { data: bookingsRaw, error } = await db
+  const { data: bookingsRaw, error } = await withTimeout(db
     .from('bookings')
     .select('homestay_id, total_price, guest_count, homestay:homestays(name)')
-    .neq('status', 'cancelled');
+    .neq('status', 'cancelled'));
   if (error) throw error;
 
   const performanceMap: Record<string, HomestayPerformance> = {};

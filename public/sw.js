@@ -1,24 +1,22 @@
-// StayFlow Service Worker
-const CACHE_NAME = 'stayflow-v1';
+// StayFlow Service Worker - v2 (force update on new deploy)
+const CACHE_NAME = 'stayflow-v2';
 const STATIC_ASSETS = [
   '/',
-  '/booking',
-  '/homestay',
-  '/analytics',
-  '/settings',
 ];
 
-// Install: cache static assets
+// Install: cache static assets and immediately activate
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch(() => {
+        // Ignore cache failures during install — don't block activation
+      });
     })
   );
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean ALL old caches aggressively
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -32,45 +30,40 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for static
+// Fetch: NETWORK-FIRST for everything.
+// This prevents stale cached pages from being served on iOS Safari
+// after a new Vercel deployment.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip Supabase API calls - always network
+  // Skip Supabase API calls - always go direct to network
+  const url = new URL(request.url);
   if (url.hostname.includes('supabase')) return;
 
-  // For navigation requests: network first, fallback to cache
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
+  // Network-first strategy for ALL requests
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        // Only cache successful responses
+        if (response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request).then((r) => r || caches.match('/')))
-    );
-    return;
-  }
-
-  // For static assets: cache first, then network
-  if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|webp|woff2?|ico)$/)
-  ) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
+        }
+        return response;
+      })
+      .catch(() => {
+        // Network failed — try cache as fallback
+        return caches.match(request).then((cached) => {
+          if (cached) return cached;
+          // Last resort: return the cached root page for navigation requests
+          if (request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return undefined;
         });
       })
-    );
-    return;
-  }
+  );
 });
