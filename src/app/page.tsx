@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [performance, setPerformance] = useState<HomestayPerformance[]>([]);
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorDetail, setErrorDetail] = useState('');
@@ -58,6 +59,7 @@ export default function DashboardPage() {
         setStats(statsData);
         setRevenueData(revData);
         setPerformance(perfData);
+        setAllBookings(bkData);
         setNotifications(buildNotifications(bkData));
       } catch (err: any) {
         const detail = err?.message || JSON.stringify(err) || 'Unknown error';
@@ -82,16 +84,52 @@ export default function DashboardPage() {
     }));
   }, []);
 
+  // Compute stats based on selected homestay
+  const displayStats = useMemo(() => {
+    if (!stats) return null;
+    if (selectedHomestay === 'all') return stats;
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const hsBookings = allBookings.filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
+    const monthBookings = hsBookings.filter(b => {
+      const d = new Date(b.check_in);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const month_revenue = monthBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+    const month_bookings = monthBookings.length;
+    const month_guests = monthBookings.reduce((sum, b) => sum + (b.guest_count || 0), 0);
+    
+    // Simplification for specific homestay: Laba Bersih = Omset - (Expenses not fetched, so assume 0 for now)
+    const net_profit = month_revenue; 
+
+    // Occupancy rate for single homestay
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const occupancy_rate = Math.min(100, Math.round((month_bookings / daysInMonth) * 100));
+
+    return {
+      ...stats,
+      month_revenue,
+      month_bookings,
+      month_guests,
+      net_profit,
+      occupancy_rate
+    };
+  }, [selectedHomestay, stats, allBookings]);
+
   // Hitung "Pendapatan Saya" berdasarkan komisi
   const myRevenue = useMemo(() => {
-    if (!stats) return 0;
+    if (!displayStats) return 0;
     if (selectedHomestay === 'all') {
-      return stats.month_revenue * 0.12;
+      return displayStats.month_revenue * 0.12; // default 12% for all
     }
     const homestay = homestays.find(h => h.id === selectedHomestay);
     const commissionRate = homestay?.commission_rate || 10;
-    return stats.month_revenue * (commissionRate / 100);
-  }, [selectedHomestay, stats, homestays]);
+    return displayStats.month_revenue * (commissionRate / 100);
+  }, [selectedHomestay, displayStats, homestays]);
 
 
 
@@ -160,7 +198,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Omset Kotor"
-            value={formatCurrency(stats?.month_revenue || 0)}
+            value={formatCurrency(displayStats?.month_revenue || 0)}
             icon={Wallet}
             iconColor="text-emerald-600"
             iconBg="bg-emerald-50"
@@ -168,7 +206,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Total Booking"
-            value={formatNumber(stats?.month_bookings || 0)}
+            value={formatNumber(displayStats?.month_bookings || 0)}
             icon={CalendarCheck}
             iconColor="text-violet-600"
             iconBg="bg-violet-50"
@@ -176,7 +214,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Total Tamu"
-            value={`${formatNumber(stats?.month_guests || 0)} org`}
+            value={`${formatNumber(displayStats?.month_guests || 0)} org`}
             icon={Users}
             iconColor="text-amber-600"
             iconBg="bg-amber-50"
@@ -184,7 +222,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Occupancy Rate"
-            value={`${stats?.occupancy_rate || 0}%`}
+            value={`${displayStats?.occupancy_rate || 0}%`}
             icon={Percent}
             iconColor="text-sky-600"
             iconBg="bg-sky-50"
@@ -192,7 +230,7 @@ export default function DashboardPage() {
           />
           <StatCard
             label="Laba Bersih"
-            value={formatCurrency(stats?.net_profit || 0)}
+            value={formatCurrency(displayStats?.net_profit || 0)}
             icon={TrendingUp}
             iconColor="text-emerald-600"
             iconBg="bg-emerald-50"
