@@ -87,22 +87,44 @@ export default function DashboardPage() {
   // Compute stats based on selected homestay
   const displayStats = useMemo(() => {
     if (!stats) return null;
-    if (selectedHomestay === 'all') return stats;
 
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const hsBookings = allBookings.filter(b => b.homestay_id === selectedHomestay && b.status !== 'cancelled');
-    const monthBookings = hsBookings.filter(b => {
+    // Determine the relevant bookings for the current month
+    const activeBookings = allBookings.filter(b => b.status !== 'cancelled');
+    const monthBookings = activeBookings.filter(b => {
       const d = new Date(b.check_in);
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
 
-    const month_revenue = monthBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
-    const month_bookings = monthBookings.length;
-    const month_guests = monthBookings.reduce((sum, b) => sum + (b.guest_count || 0), 0);
+    if (selectedHomestay === 'all') {
+      // Calculate global myRevenue based on individual homestay commissions
+      let totalMyRevenue = 0;
+      monthBookings.forEach(b => {
+        const hs = homestays.find(h => h.id === b.homestay_id);
+        const commissionRate = hs?.commission_rate || 10;
+        totalMyRevenue += (b.total_price || 0) * (commissionRate / 100);
+      });
+
+      return {
+        ...stats,
+        my_revenue: totalMyRevenue
+      };
+    }
+
+    // Specific Homestay calculation
+    const hsMonthBookings = monthBookings.filter(b => b.homestay_id === selectedHomestay);
+    const month_revenue = hsMonthBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+    const month_bookings = hsMonthBookings.length;
+    const month_guests = hsMonthBookings.reduce((sum, b) => sum + (b.guest_count || 0), 0);
     
+    // Calculate myRevenue for this specific homestay
+    const homestay = homestays.find(h => h.id === selectedHomestay);
+    const commissionRate = homestay?.commission_rate || 10;
+    const my_revenue = month_revenue * (commissionRate / 100);
+
     // Simplification for specific homestay: Laba Bersih = Omset - (Expenses not fetched, so assume 0 for now)
     const net_profit = month_revenue; 
 
@@ -116,20 +138,10 @@ export default function DashboardPage() {
       month_bookings,
       month_guests,
       net_profit,
-      occupancy_rate
+      occupancy_rate,
+      my_revenue
     };
-  }, [selectedHomestay, stats, allBookings]);
-
-  // Hitung "Pendapatan Saya" berdasarkan komisi
-  const myRevenue = useMemo(() => {
-    if (!displayStats) return 0;
-    if (selectedHomestay === 'all') {
-      return displayStats.month_revenue * 0.12; // default 12% for all
-    }
-    const homestay = homestays.find(h => h.id === selectedHomestay);
-    const commissionRate = homestay?.commission_rate || 10;
-    return displayStats.month_revenue * (commissionRate / 100);
-  }, [selectedHomestay, displayStats, homestays]);
+  }, [selectedHomestay, stats, allBookings, homestays]);
 
 
 
@@ -190,7 +202,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3 mb-5">
           <StatCard
             label="Pendapatan Saya"
-            value={formatCurrency(myRevenue)}
+            value={formatCurrency(displayStats?.my_revenue || 0)}
             icon={TrendingUp}
             iconColor="text-blue-600"
             iconBg="bg-blue-50"
