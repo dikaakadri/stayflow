@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { usePriceCalculator } from '@/hooks/use-price-calculator';
 import { getHomestays, getBookings, addBooking, updateBooking } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
-import { Check, AlertTriangle, Plus, Minus } from 'lucide-react';
+import { Check, AlertTriangle, Plus, Minus, X } from 'lucide-react';
 import type { BookingStatus, ExtraFacility, Homestay, Booking } from '@/types';
 import { getExtraFacilityOptions } from '@/types';
 import { useMounted } from '@/hooks/use-mounted';
@@ -40,6 +40,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const [extras, setExtras] = useState<ExtraFacility[]>(initialData?.extras || []);
   const [saved, setSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Data State
   const [activeHomestays, setActiveHomestays] = useState<Homestay[]>([]);
@@ -107,6 +108,7 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMsg(null);
     
     try {
       const bookingData = {
@@ -137,8 +139,10 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
         router.refresh();
         router.push('/booking');
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving booking:", err);
+      const msg = err?.message || 'Gagal menyimpan booking. Periksa koneksi dan coba lagi.';
+      setErrorMsg(msg);
       setIsSubmitting(false);
     }
   };
@@ -169,6 +173,19 @@ export default function BookingFormPage({ initialData, isEdit = false }: Booking
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pt-4 pb-6 space-y-4">
+      {/* Error Notification */}
+      {errorMsg && (
+        <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
+          <AlertTriangle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-red-800">Gagal Menyimpan!</p>
+            <p className="text-xs text-red-700 mt-0.5">{errorMsg}</p>
+          </div>
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-600">
+            <X size={16} />
+          </button>
+        </div>
+      )}
       {/* Pilih Homestay */}
       <div className="animate-fade-in-up opacity-0 delay-1">
         <label className="block text-xs font-semibold text-text-secondary mb-1.5">

@@ -1,24 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check } from 'lucide-react';
+import { Check, AlertTriangle, X } from 'lucide-react';
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_CONFIG } from '@/lib/constants';
-import { MOCK_HOMESTAYS } from '@/lib/mock-data';
+import { getHomestays, addExpense } from '@/lib/api';
+import type { Homestay, ExpenseCategory } from '@/types';
 
 export function ExpenseForm() {
   const router = useRouter();
+  const [homestays, setHomestays] = useState<Homestay[]>([]);
   const [homestayId, setHomestayId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [category, setCategory] = useState<ExpenseCategory>(EXPENSE_CATEGORIES[0]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [saved, setSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadHomestays() {
+      try {
+        const data = await getHomestays();
+        setHomestays(data.filter(h => h.is_active));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadHomestays();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => router.push('/settings/expenses'), 1500);
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      await addExpense({
+        homestay_id: homestayId || null,
+        expense_date: date,
+        category,
+        amount: parseFloat(amount),
+        description: description || null,
+      });
+      setSaved(true);
+      setTimeout(() => router.push('/settings/expenses'), 1500);
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.message || 'Gagal menyimpan pengeluaran. Coba lagi.';
+      setErrorMsg(msg);
+      setIsSubmitting(false);
+    }
   };
 
   if (saved) {
@@ -36,6 +69,20 @@ export function ExpenseForm() {
 
   return (
     <form onSubmit={handleSubmit} className="px-4 pt-4 pb-6 space-y-4">
+      {/* Error Notification */}
+      {errorMsg && (
+        <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl animate-fade-in">
+          <AlertTriangle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-red-800">Gagal Menyimpan!</p>
+            <p className="text-xs text-red-700 mt-0.5">{errorMsg}</p>
+          </div>
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-red-400 hover:text-red-600">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="animate-fade-in-up opacity-0 delay-1">
         <label className="block text-xs font-semibold text-text-secondary mb-1.5">Homestay</label>
         <select
@@ -44,7 +91,7 @@ export function ExpenseForm() {
           className="w-full h-12 px-4 bg-surface border border-border-light rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
         >
           <option value="">Semua Homestay (Umum)</option>
-          {MOCK_HOMESTAYS.map(h => (
+          {homestays.map(h => (
             <option key={h.id} value={h.id}>{h.name}</option>
           ))}
         </select>
@@ -65,7 +112,7 @@ export function ExpenseForm() {
           <label className="block text-xs font-semibold text-text-secondary mb-1.5">Kategori *</label>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as any)}
+            onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
             required
             className="w-full h-12 px-3 bg-surface border border-border-light rounded-xl text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
           >
@@ -101,9 +148,10 @@ export function ExpenseForm() {
 
       <button
         type="submit"
-        className="w-full h-13 bg-primary text-white font-semibold rounded-xl text-sm shadow-sm hover:bg-primary-dark active:scale-[0.98] transition-all mt-4 animate-fade-in-up opacity-0 delay-5"
+        disabled={isSubmitting}
+        className="w-full h-13 bg-primary text-white font-semibold rounded-xl text-sm shadow-sm hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all mt-4 animate-fade-in-up opacity-0 delay-5"
       >
-        Simpan Pengeluaran
+        {isSubmitting ? 'Menyimpan...' : 'Simpan Pengeluaran'}
       </button>
     </form>
   );

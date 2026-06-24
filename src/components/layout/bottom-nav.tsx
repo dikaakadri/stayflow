@@ -4,18 +4,23 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 export function BottomNav() {
   const pathname = usePathname();
+  // Prevent hydration mismatch: render only after client mount
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
-    <nav className="bottom-nav pb-safe bg-primary border-t border-primary-dark">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <nav className="bottom-nav pb-safe bg-primary border-t border-primary-dark" suppressHydrationWarning>
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2" suppressHydrationWarning>
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.href === '/'
+          const isActive = mounted
+            ? item.href === '/'
               ? pathname === '/'
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href)
+            : false;
           const Icon = item.icon;
 
           return (
@@ -30,6 +35,7 @@ export function BottomNav() {
               )}
             >
               <div
+                suppressHydrationWarning
                 className={cn(
                   'flex items-center justify-center w-10 h-8 rounded-xl transition-all duration-200',
                   isActive && 'bg-white/20 scale-105'
