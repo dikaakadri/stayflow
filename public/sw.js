@@ -1,5 +1,5 @@
-// StayFlow Service Worker - v2 (force update on new deploy)
-const CACHE_NAME = 'stayflow-v2';
+// StayFlow Service Worker - v3 (force update on new deploy)
+const CACHE_NAME = 'stayflow-v3';
 const STATIC_ASSETS = [
   '/',
 ];
